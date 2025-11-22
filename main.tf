@@ -2,8 +2,8 @@ terraform {
   required_providers {
     # Use the official Snowflake provider package for Terraform 0.13+
     snowflake = {
-      source  = "snowflakedb/snowflake"
-      version = ">= 1.0.0"
+      source  = "chanzuckerberg/snowflake"
+      version = "0.25.17"
     }
     null = {
       source  = "hashicorp/null"
@@ -23,9 +23,8 @@ terraform {
 provider "snowflake" {
 }
 
-resource "snowflake_database" "demo_db" {
-  name    = "DEMO_DB"
-  comment = "Database for Snowflake Terraform demo"
+resource "snowflake_execute" "create_db" {
+  execute = "CREATE DATABASE IF NOT EXISTS DEMO_DB;"
 }
 // Snowflake variables are expected to be provided externally
 // (for example: a `variables.tf` file, environment `TF_VAR_*`, or
