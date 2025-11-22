@@ -1,7 +1,9 @@
 terraform {
   required_providers {
+    # Use the official Snowflake provider package for Terraform 0.13+
     snowflake = {
-      source = "Snowflake-Labs/snowflake"
+      source  = "snowflakedb/snowflake"
+      version = ">= 1.0.0"
     }
     null = {
       source  = "hashicorp/null"
