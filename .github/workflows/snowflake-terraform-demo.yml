@@ -9,6 +9,9 @@ jobs:
   snowflake-terraform-demo:
     name: "Snowflake Terraform Demo Job"
     runs-on: ubuntu-latest
+    environment: prod
+    env:
+      TF_VAR_snowflake_warehouse: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -17,6 +20,18 @@ jobs:
         uses: hashicorp/setup-terraform@v1
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Install SnowSQL
+        run: |
+          mkdir -p $HOME/.local/bin
+          curl -L -o snowsql_installer.sh "https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/latest/linux_x86_64/snowsql-linux_x86_64.bash"
+          bash snowsql_installer.sh -y
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Verify SnowSQL
+        run: |
+          which snowsql
+          snowsql --version
 
       - name: Terraform Format
         id: fmt
