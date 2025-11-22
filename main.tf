@@ -36,16 +36,16 @@ resource "snowflake_database" "demo_db" {
 // and credentials are provided (via these variables or environment/CI secrets).
 // Running the DDL is triggered whenever the SQL file content changes (filemd5).
 // -------------------------
-resource "null_resource" "create_employee_table" {
-  triggers = {
-    sql_md5 = filemd5("${path.module}/SQLs/createTable_employee.sql")
-    db      = var.snowflake_database
-  }
+// The employee table and schema are created by the CI step that runs
+// `SQLs/createTable_employee.sql` against Snowflake after Terraform applies.
+// The SQL execution is performed in the GitHub Actions workflow using the
+// Snowflake Python connector.
 
-  provisioner "local-exec" {
-    # Use bash on Linux runners (ubuntu-latest) so GitHub Actions can run snowsql.
-    interpreter = ["bash", "-c"]
+// Execute the SQL file using the provider's SQL resource (runs DDL inside Snowflake)
+resource "snowflake_sql" "run_init_sql" {
+  name = "init_sql"
+  sql  = file("${path.module}/SQLs/createTable_employee.sql")
 
-    command = "snowsql -a \"${var.snowflake_account}\" -u \"${var.snowflake_user}\" -p \"${var.snowflake_password}\" -w \"${var.snowflake_warehouse}\" -d \"${var.snowflake_database}\" -s \"${var.snowflake_schema}\" -f \"${path.module}/SQLs/createTable_employee.sql\" -o exit_on_error=true"
-  }
+  # Ensure the database is created before running the SQL
+  depends_on = [snowflake_database.demo_db]
 }
