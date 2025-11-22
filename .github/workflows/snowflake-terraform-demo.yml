@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: prod
     env:
+      TF_TOKEN_app_terraform_io: ${{ secrets.TF_TOKEN_app_terraform_io }}
       TF_VAR_snowflake_warehouse: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
     steps:
       - name: Checkout
@@ -21,17 +22,10 @@ jobs:
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-      - name: Install SnowSQL
+      - name: Install Snowflake Python connector
         run: |
-          mkdir -p $HOME/.local/bin
-          curl -L -o snowsql_installer.sh "https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/latest/linux_x86_64/snowsql-linux_x86_64.bash"
-          bash snowsql_installer.sh -y
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Verify SnowSQL
-        run: |
-          which snowsql
-          snowsql --version
+          python -m pip install --upgrade pip
+          pip install snowflake-connector-python
 
       - name: Terraform Format
         id: fmt
@@ -39,7 +33,7 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init
+        run: terraform init -input=false
 
       - name: Terraform Validate
         id: validate
@@ -48,3 +42,42 @@ jobs:
       - name: Terraform Apply
         id: apply
         run: terraform apply -auto-approve
+
+      - name: Run SQL file in Snowflake
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+         
+        run: |
+          python - <<'PY'
+          import os
+          import snowflake.connector
+
+          sql_path = 'SQLs/createTable_employee.sql'
+          if not os.path.exists(sql_path):
+              raise SystemExit(f"SQL file not found: {sql_path}")
+
+          with open(sql_path, 'r', encoding='utf-8') as f:
+              sql = f.read()
+
+          # Connect to Snowflake using environment variables provided via Secrets
+          conn = snowflake.connector.connect(
+              user=os.environ.get('SNOWFLAKE_USER'),
+              password=os.environ.get('SNOWFLAKE_PASSWORD'),
+              account=os.environ.get('SNOWFLAKE_ACCOUNT'),
+              warehouse=os.environ.get('SNOWFLAKE_WAREHOUSE')
+              
+          )
+          cur = conn.cursor()
+          try:
+              # Split on semicolons and execute statements individually
+              for stmt in [s.strip() for s in sql.split(';') if s.strip()]:
+                  print('\nExecuting statement:\n', stmt[:200])
+                  cur.execute(stmt)
+          finally:
+              cur.close()
+              conn.close()
+          print('SQL execution completed')
+          PY

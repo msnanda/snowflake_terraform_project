@@ -1,8 +1,7 @@
 terraform {
   required_providers {
     snowflake = {
-      source  = "chanzuckerberg/snowflake"
-      version = "0.25.17"
+      source  = "Snowflake-Labs/snowflake"
     }
     null = {
       source  = "hashicorp/null"
@@ -42,10 +41,16 @@ resource "snowflake_database" "demo_db" {
 // Snowflake Python connector.
 
 // Execute the SQL file using the provider's SQL resource (runs DDL inside Snowflake)
-resource "snowflake_sql" "run_init_sql" {
-  name = "init_sql"
-  sql  = file("${path.module}/SQLs/createTable_employee.sql")
+resource "snowflake_execute" "run_init_sql" {
+  # Execute the SQL file contents inside Snowflake at apply time.
+  execute = file("${path.module}/SQLs/createTable_employee.sql")
 
-  # Ensure the database is created before running the SQL
+  # Revert action when the resource is destroyed (drops table and schema).
+  revert = <<-SQL
+    DROP TABLE IF EXISTS DEMO_DB.DEMO.employee;
+    DROP SCHEMA IF EXISTS DEMO_DB.DEMO;
+  SQL
+
+  # Ensure the database exists before running the SQL
   depends_on = [snowflake_database.demo_db]
 }
