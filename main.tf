@@ -57,8 +57,8 @@ resource "snowflake_table" "employee" {
   comment  = "Employee table managed by Terraform"
 
   column {
-    name = "employee_id"
-    type = "NUMBER(38,0)"
+    name    = "employee_id"
+    type    = "NUMBER(38,0)"
     comment = "Primary key"
   }
 
