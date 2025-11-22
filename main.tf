@@ -43,16 +43,76 @@ resource "snowflake_database" "demo_db" {
 // Snowflake Python connector.
 
 // Execute the SQL file using the provider's SQL resource (runs DDL inside Snowflake)
-resource "snowflake_execute" "run_init_sql" {
-  # Execute the SQL file contents inside Snowflake at apply time.
-  execute = file("${path.module}/SQLs/createTable_employee.sql")
+resource "snowflake_schema" "demo_schema" {
+  name     = "DEMO"
+  database = snowflake_database.demo_db.name
+  comment  = "Schema for demo objects"
 
-  # Revert action when the resource is destroyed (drops table and schema).
-  revert = <<-SQL
-    DROP TABLE IF EXISTS DEMO_DB.DEMO.employee;
-    DROP SCHEMA IF EXISTS DEMO_DB.DEMO;
-  SQL
-
-  # Ensure the database exists before running the SQL
   depends_on = [snowflake_database.demo_db]
+}
+
+resource "snowflake_table" "employee" {
+  database = snowflake_database.demo_db.name
+  schema   = snowflake_schema.demo_schema.name
+  name     = "employee"
+  comment  = "Employee table managed by Terraform"
+
+  column {
+    name = "employee_id"
+    type = "NUMBER(38,0)"
+    comment = "Primary key"
+  }
+
+  column {
+    name = "first_name"
+    type = "VARCHAR(100)"
+  }
+
+  column {
+    name = "last_name"
+    type = "VARCHAR(100)"
+  }
+
+  column {
+    name = "email"
+    type = "VARCHAR(255)"
+  }
+
+  column {
+    name = "phone"
+    type = "VARCHAR(50)"
+  }
+
+  column {
+    name = "hire_date"
+    type = "DATE"
+  }
+
+  column {
+    name = "job_id"
+    type = "VARCHAR(50)"
+  }
+
+  column {
+    name = "salary"
+    type = "NUMBER(10,2)"
+  }
+
+  column {
+    name = "department_id"
+    type = "NUMBER(38,0)"
+  }
+
+  column {
+    name = "created_at"
+    type = "TIMESTAMP_LTZ"
+  }
+
+  column {
+    name = "updated_at"
+    type = "TIMESTAMP_LTZ"
+  }
+
+  # Ensure the schema exists before creating the table
+  depends_on = [snowflake_schema.demo_schema]
 }
