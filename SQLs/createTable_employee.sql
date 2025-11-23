@@ -4,7 +4,7 @@
 CREATE SCHEMA IF NOT EXISTS DEMO_DB.DEMO;
 
 -- Create the table fully-qualified in DEMO_DB.DEMO
-CREATE TABLE IF NOT EXISTS DEMO_DB.DEMO.employee (
+CREATE TABLE IF NOT EXISTS DEMO_DB.DEMO.employee2 (
     employee_id NUMBER(38,0) NOT NULL,
     first_name VARCHAR(100),
     last_name VARCHAR(100),
