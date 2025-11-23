@@ -54,7 +54,7 @@ resource "snowflake_schema" "demo_schema" {
 resource "snowflake_table" "employee" {
   database = snowflake_database.demo_db.name
   schema   = snowflake_schema.demo_schema.name
-  name     = "employee"
+  name     = "employee1"
   comment  = "Employee table managed by Terraform"
 
   column {
