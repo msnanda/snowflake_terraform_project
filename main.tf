@@ -51,10 +51,10 @@ resource "snowflake_schema" "demo_schema" {
   depends_on = [snowflake_database.demo_db]
 }
 
-resource "snowflake_table" "employee3" {
+resource "snowflake_table" "employee4" {
   database = snowflake_database.demo_db.name
   schema   = snowflake_schema.demo_schema.name
-  name     = "employee3"
+  name     = "employee4"
   comment  = "Employee table managed by Terraform"
 
   column {
